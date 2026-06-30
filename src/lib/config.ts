@@ -27,3 +27,27 @@ export const KNOWLEDGE_DIR = "data/knowledge";
 /** The exact phrase returned when the knowledge base has no answer. */
 export const NO_ANSWER_MESSAGE =
   "I don't have that information in the current knowledge base.";
+
+/**
+ * Supabase (pgvector) configuration. When both a URL and key are present the
+ * app retrieves from Supabase; otherwise it falls back to the local JSON index.
+ */
+export const SUPABASE_URL =
+  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+
+export const SUPABASE_KEY =
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "";
+
+/** True when Supabase retrieval is configured. */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(SUPABASE_URL && SUPABASE_KEY);
+}
+
+/** Name of the pgvector similarity-search function in Supabase. */
+export const SUPABASE_MATCH_FN = "kb_match_documents";
+
+/** Name of the pgvector documents table in Supabase. */
+export const SUPABASE_TABLE = "kb_documents";

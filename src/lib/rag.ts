@@ -1,8 +1,7 @@
-import { CHAT_MODEL, EMBEDDING_MODEL, NO_ANSWER_MESSAGE } from "./config";
-import { embedText } from "./embeddings";
+import { CHAT_MODEL, NO_ANSWER_MESSAGE } from "./config";
 import { getOpenAI } from "./openai";
+import { retrieve } from "./retrieval";
 import type { RetrievedChunk, Source } from "./types";
-import { loadVectorIndex, searchIndex } from "./vectorStore";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -56,25 +55,10 @@ export async function answerQuestion(
   question: string,
   history: ChatMessage[] = []
 ): Promise<RagOutcome> {
-  const index = loadVectorIndex();
-  if (!index) return { ok: false, reason: "no-index" };
+  const retrieval = await retrieve(question);
+  if (!retrieval.ok) return retrieval;
 
-  // The query must be embedded with the same model the index was built with,
-  // otherwise the vectors aren't comparable. Fail loudly with a clear fix.
-  if (index.embeddingModel && index.embeddingModel !== EMBEDDING_MODEL) {
-    return {
-      ok: false,
-      reason: "model-mismatch",
-      message:
-        `The knowledge base index was built with "${index.embeddingModel}" but the app ` +
-        `is configured to use "${EMBEDDING_MODEL}". Rebuild the index with ` +
-        "`npm run embeddings`, or set OPENAI_EMBEDDING_MODEL back to " +
-        `"${index.embeddingModel}".`,
-    };
-  }
-
-  const queryEmbedding = await embedText(question);
-  const chunks = searchIndex(index, queryEmbedding);
+  const chunks = retrieval.chunks;
 
   // Nothing relevant found — return the fallback without calling the model.
   if (chunks.length === 0) {
