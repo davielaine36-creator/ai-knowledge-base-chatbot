@@ -40,12 +40,16 @@ export async function POST(req: Request) {
     }
   }
 
-  const rawQuestion =
-    typeof body.question === "string"
-      ? body.question
-      : lastUserIndex >= 0
-        ? history[lastUserIndex].content
-        : "";
+  // Treat an empty / whitespace-only `question` as absent so we fall back to
+  // the last user message in `messages`.
+  const hasExplicitQuestion =
+    typeof body.question === "string" && body.question.trim() !== "";
+
+  const rawQuestion = hasExplicitQuestion
+    ? (body.question as string)
+    : lastUserIndex >= 0
+      ? history[lastUserIndex].content
+      : "";
   const question = rawQuestion.trim();
 
   if (!question) {
@@ -56,12 +60,11 @@ export async function POST(req: Request) {
   }
 
   // History passed to the model excludes the current question.
-  const priorHistory =
-    typeof body.question === "string"
-      ? history
-      : lastUserIndex >= 0
-        ? history.slice(0, lastUserIndex)
-        : history;
+  const priorHistory = hasExplicitQuestion
+    ? history
+    : lastUserIndex >= 0
+      ? history.slice(0, lastUserIndex)
+      : history;
 
   try {
     const outcome = await answerQuestion(question, priorHistory);
