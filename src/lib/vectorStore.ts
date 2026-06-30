@@ -8,6 +8,13 @@ let cachedIndex: VectorIndex | null = null;
 
 /** Cosine similarity between two equal-length vectors. */
 export function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error(
+      `Embedding dimension mismatch: ${a.length} vs ${b.length}. ` +
+        "This usually means the embedding model changed since the index was " +
+        "built. Rebuild it with `npm run embeddings`."
+    );
+  }
   let dot = 0;
   let normA = 0;
   let normB = 0;
@@ -31,7 +38,22 @@ export function loadVectorIndex(rootDir = process.cwd()): VectorIndex | null {
   if (!fs.existsSync(file)) return null;
 
   const raw = fs.readFileSync(file, "utf8");
-  cachedIndex = JSON.parse(raw) as VectorIndex;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    // Corrupt / hand-edited file — treat as "not built" so the caller shows the
+    // friendly "run `npm run embeddings`" message rather than crashing.
+    return null;
+  }
+
+  const index = parsed as VectorIndex;
+  if (!index || !Array.isArray(index.chunks) || index.chunks.length === 0) {
+    return null;
+  }
+
+  cachedIndex = index;
   return cachedIndex;
 }
 

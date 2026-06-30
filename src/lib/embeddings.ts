@@ -18,5 +18,9 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
     model: EMBEDDING_MODEL,
     input: texts.map((t) => t.replace(/\n/g, " ")),
   });
-  return response.data.map((d) => d.embedding);
+  // Re-order by the per-item `index` so embeddings always align to their input
+  // positions, even if the API/proxy returns them out of order.
+  return [...response.data]
+    .sort((a, b) => a.index - b.index)
+    .map((d) => d.embedding);
 }

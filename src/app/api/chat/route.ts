@@ -19,12 +19,34 @@ export async function POST(req: Request) {
   }
 
   // Accept either a single `question` or a `messages` array (last user message
-  // is treated as the question).
-  const history = Array.isArray(body.messages) ? body.messages : [];
-  const lastUserMessage = [...history]
-    .reverse()
-    .find((m) => m.role === "user");
-  const question = (body.question || lastUserMessage?.content || "").trim();
+  // is treated as the question). Validate every element at runtime — the types
+  // above are compile-time only, and the body is fully client-controlled.
+  const rawMessages = Array.isArray(body.messages) ? body.messages : [];
+  const history: ChatMessage[] = rawMessages.filter(
+    (m): m is ChatMessage =>
+      m != null &&
+      typeof m === "object" &&
+      ((m as ChatMessage).role === "user" ||
+        (m as ChatMessage).role === "assistant") &&
+      typeof (m as ChatMessage).content === "string"
+  );
+
+  // Index of the most recent user message (reference-safe, unlike indexOf).
+  let lastUserIndex = -1;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].role === "user") {
+      lastUserIndex = i;
+      break;
+    }
+  }
+
+  const rawQuestion =
+    typeof body.question === "string"
+      ? body.question
+      : lastUserIndex >= 0
+        ? history[lastUserIndex].content
+        : "";
+  const question = rawQuestion.trim();
 
   if (!question) {
     return NextResponse.json(
@@ -34,21 +56,22 @@ export async function POST(req: Request) {
   }
 
   // History passed to the model excludes the current question.
-  const priorHistory = body.question
-    ? history
-    : history.slice(0, history.lastIndexOf(lastUserMessage as ChatMessage));
+  const priorHistory =
+    typeof body.question === "string"
+      ? history
+      : lastUserIndex >= 0
+        ? history.slice(0, lastUserIndex)
+        : history;
 
   try {
     const outcome = await answerQuestion(question, priorHistory);
 
     if (!outcome.ok) {
-      return NextResponse.json(
-        {
-          error:
-            "The knowledge base index hasn't been built yet. Run `npm run embeddings` to generate it.",
-        },
-        { status: 503 }
-      );
+      const error =
+        outcome.reason === "model-mismatch"
+          ? outcome.message
+          : "The knowledge base index hasn't been built yet. Run `npm run embeddings` to generate it.";
+      return NextResponse.json({ error }, { status: 503 });
     }
 
     return NextResponse.json(outcome.result);
@@ -63,7 +86,7 @@ export async function POST(req: Request) {
           ? message
           : "Sorry, something went wrong generating an answer. Please try again.",
       },
-      { status: isConfigError ? 500 : 500 }
+      { status: 500 }
     );
   }
 }

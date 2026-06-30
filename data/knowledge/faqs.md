@@ -30,7 +30,7 @@ You can secure your place with a £79 deposit and pay the balance no later than 
 
 ## Can I get a refund if I cancel?
 
-Yes, depending on notice. More than 14 days' notice gets a full refund minus a £25 admin fee; 7–14 days gets a 50% refund; less than 7 days is non-refundable but can be transferred once. See the "Refunds" topic for full details.
+Yes, depending on notice. More than 14 days' notice gets a full refund minus a £25 administration fee; 7–14 days gets a 50% refund; less than 7 days is non-refundable but you can reschedule (a £40 reschedule fee applies). See the "Refunds" topic for full details.
 
 ## Do you offer online courses?
 

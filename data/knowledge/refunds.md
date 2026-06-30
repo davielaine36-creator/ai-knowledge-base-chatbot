@@ -6,9 +6,9 @@ We want you to book with confidence. Our refund policy depends on how much notic
 
 - **More than 14 days' notice:** full refund of any fees paid, minus a £25 administration fee.
 - **7 to 14 days' notice:** 50% refund of the course fee.
-- **Less than 7 days' notice:** no refund, but you may transfer to a future course once (a £40 transfer fee applies).
+- **Less than 7 days' notice:** no refund, but you may reschedule to a future course (a £40 reschedule fee applies).
 
-Deposits (£79) are non-refundable, but they can be applied to a rescheduled course if you give at least 7 days' notice.
+Deposits (£79) are non-refundable, but they can be carried over to a rescheduled course. If you reschedule with less than 7 days' notice, the £40 reschedule fee applies.
 
 ## Cancellation by Brown Academy
 

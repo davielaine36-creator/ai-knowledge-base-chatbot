@@ -30,10 +30,14 @@ export default function Chat() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    const el = scrollRef.current;
+    if (!el) return;
+    // Only auto-scroll if the user is already near the bottom, so we don't yank
+    // the view while they're reading an earlier message.
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceFromBottom < 160) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
   }, [messages, loading]);
 
   async function sendMessage(question: string) {
@@ -116,7 +120,10 @@ export default function Chat() {
             Brown Academy Assistant
           </p>
           <p className="flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"
+              aria-hidden="true"
+            />
             Answers from the knowledge base only
           </p>
         </div>
@@ -125,6 +132,10 @@ export default function Chat() {
       {/* Messages */}
       <div
         ref={scrollRef}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label="Conversation with the Brown Academy assistant"
         className="chat-scroll flex-1 space-y-4 overflow-y-auto px-5 py-5"
       >
         {isEmpty && (
@@ -152,8 +163,12 @@ export default function Chat() {
         ))}
 
         {loading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-3">
+          <div className="flex justify-start" role="status">
+            <span className="sr-only">Assistant is typing…</span>
+            <div
+              className="rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-3"
+              aria-hidden="true"
+            >
               <span className="typing-dot" />
               <span className="typing-dot ml-1" />
               <span className="typing-dot ml-1" />
@@ -187,6 +202,7 @@ export default function Chat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question…"
+          aria-label="Ask a question about Brown Academy"
           className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
           disabled={loading}
         />
@@ -208,7 +224,7 @@ function MessageBubble({ message }: { message: Message }) {
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] animate-fade-in-up rounded-2xl rounded-br-sm bg-brand-600 px-4 py-2.5 text-sm text-white">
+        <div className="max-w-[80%] animate-fade-in-up whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-brand-600 px-4 py-2.5 text-sm text-white">
           {message.content}
         </div>
       </div>
@@ -219,7 +235,7 @@ function MessageBubble({ message }: { message: Message }) {
     <div className="flex justify-start">
       <div className="max-w-[85%] animate-fade-in-up space-y-2">
         <div
-          className={`whitespace-pre-wrap rounded-2xl rounded-bl-sm px-4 py-3 text-sm ${
+          className={`whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm px-4 py-3 text-sm ${
             message.isError
               ? "border border-amber-200 bg-amber-50 text-amber-800"
               : "bg-slate-100 text-slate-800"
@@ -230,7 +246,7 @@ function MessageBubble({ message }: { message: Message }) {
 
         {message.sources && message.sources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 pl-1">
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-slate-500">
               Sources used:
             </span>
             {message.sources.map((s) => (

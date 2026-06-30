@@ -29,7 +29,7 @@ For multi-day courses such as the Door Supervisor course, all days must be compl
 ## Rescheduling
 
 - You can reschedule to a later course free of charge if you give us at least 7 days' notice before your start date.
-- Rescheduling with less than 7 days' notice may incur a £40 administration fee.
+- Rescheduling with less than 7 days' notice incurs a £40 reschedule fee.
 - See the "Refunds" topic for our cancellation and refund policy.
 
 ## Start times

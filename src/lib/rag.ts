@@ -1,4 +1,4 @@
-import { CHAT_MODEL, NO_ANSWER_MESSAGE } from "./config";
+import { CHAT_MODEL, EMBEDDING_MODEL, NO_ANSWER_MESSAGE } from "./config";
 import { embedText } from "./embeddings";
 import { getOpenAI } from "./openai";
 import type { RetrievedChunk, Source } from "./types";
@@ -14,10 +14,11 @@ export interface AnswerResult {
   sources: Source[];
 }
 
-/** Result type that surfaces the "index not built yet" case to the caller. */
+/** Result type that surfaces setup problems to the caller. */
 export type RagOutcome =
   | { ok: true; result: AnswerResult }
-  | { ok: false; reason: "no-index" };
+  | { ok: false; reason: "no-index" }
+  | { ok: false; reason: "model-mismatch"; message: string };
 
 const SYSTEM_PROMPT = `You are the customer support assistant for Brown Academy, a professional security training and requalification academy.
 
@@ -57,6 +58,20 @@ export async function answerQuestion(
 ): Promise<RagOutcome> {
   const index = loadVectorIndex();
   if (!index) return { ok: false, reason: "no-index" };
+
+  // The query must be embedded with the same model the index was built with,
+  // otherwise the vectors aren't comparable. Fail loudly with a clear fix.
+  if (index.embeddingModel && index.embeddingModel !== EMBEDDING_MODEL) {
+    return {
+      ok: false,
+      reason: "model-mismatch",
+      message:
+        `The knowledge base index was built with "${index.embeddingModel}" but the app ` +
+        `is configured to use "${EMBEDDING_MODEL}". Rebuild the index with ` +
+        "`npm run embeddings`, or set OPENAI_EMBEDDING_MODEL back to " +
+        `"${index.embeddingModel}".`,
+    };
+  }
 
   const queryEmbedding = await embedText(question);
   const chunks = searchIndex(index, queryEmbedding);
