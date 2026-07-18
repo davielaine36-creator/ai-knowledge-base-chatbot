@@ -163,17 +163,19 @@ This overwrites `data/vector-index.json`. Restart `npm run dev` if it was runnin
 ## Using Supabase (pgvector) instead of the local index
 
 For production (and to avoid shipping a vector file), the app can retrieve from
-Supabase's `pgvector` store. The database objects are already created by a
-migration:
+Supabase's `pgvector` store. The database objects are defined by a committed
+migration, [`supabase/migrations/0001_kb_documents.sql`](supabase/migrations/0001_kb_documents.sql):
 
 - table `kb_documents (id, source, source_file, heading, content, embedding vector(1536))`
 - a `SECURITY DEFINER` function `kb_match_documents(query_embedding, match_count, min_score)` that does cosine similarity search and is callable with the **anon/publishable** key (no service-role secret needed at runtime)
 
 ### One-time setup
 
-If you're wiring up a fresh Supabase project, run the same migration (see
-`scripts/` history / the SQL in this repo's PR) to create the table + function,
-and make sure the `vector` extension is enabled.
+Wiring up a fresh Supabase project, run the migration once to create the
+`vector` extension, the table, its HNSW cosine index, and the search function.
+Either paste `supabase/migrations/0001_kb_documents.sql` into the Supabase
+dashboard **SQL Editor** and run it, or apply it with the Supabase CLI
+(`supabase db push`).
 
 ### Seed the database
 
